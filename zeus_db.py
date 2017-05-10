@@ -1,5 +1,6 @@
 import configparser
 import logging
+import multiprocessing
 import sys
 from datetime import datetime
 from time import sleep
@@ -11,6 +12,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Integer, String, DateTime
+from tornado import concurrent
 
 import base_math as bm
 
@@ -84,7 +86,7 @@ class ZeusDB:
 
     '''
     更新低频后复权历史数据
-    ktype - 默认为D日线数据
+    k_type - 默认为D日线数据
             D=日k线 W=周 M=月 
             5=5分钟 15=15分钟 
             30=30分钟 60=60分钟
@@ -93,31 +95,24 @@ class ZeusDB:
     def update_k_data_with_macd(self, k_type):
         list_size = self.__session.query(func.count('*')).select_from(StockBasics).scalar()
         query = self.__session.query(StockBasics)
-
-        # task_pool = threadpool.ThreadPool(self.__thread_pool_size)
-        # request_list=[]#存放任务列表
-        # i = 1
-        # for stock in query:
-        #     request_list.append(([stock.code,ktype,i,list_size],None))
-        #     i = i+1
-        #     if i > 10:
-        #         break`
-        #
-        # requests = threadpool.makeRequests(self.fetch_hist_k_data_with_macd, request_list)
-        # [task_pool.putRequest(req) for req in requests]
-        # task_pool.wait()
-
+        logging.info('sync started')
+        futures = set()
         i = 0
         output = sys.stdout
-        for stock in query:
-            self.fetch_hist_k_data_with_macd(stock.code, k_type)
-            output.write('\r complete percent:%.0f%%' % (i / list_size * 100))
-            i = i + 1
-        output.flush()
+        with concurrent.futures.ThreadPoolExecutor(multiprocessing.cpu_count() * 4) as executor:
+            for stock in query:
+                future = executor.submit(self.fetch_hist_k_data_with_macd, stock.code, k_type)
+                futures.add(future)
+                output.write('\r complete percent:%.0f%%' % (i % list_size) * 100)
+                i = i + 1
+                if i > 10: break
+            output.write('\n')
+            output.flush()
 
         time_log = TimeLog(id=2, type='all_hist_fetch_time', last_modify_time=datetime.now())
         self.__session.merge(time_log)
         self.__session.commit()
+        logging.info('sync ended')
 
     def get_all_stock_list(self):
         return self.__session.query(StockBasics)
@@ -185,39 +180,38 @@ class ZeusDB:
         data = pd.read_sql_query("SELECT b.* FROM (\
          SELECT date,close,ema_short,ema_long,dif,dea,macd FROM " + table_name + " \
          WHERE date = (SELECT max(date) FROM " + table_name + " \
-         WHERE macd IS NOT NULL) AND code = '" + code + "'  \
+         WHERE macd IS NOT NULL AND code = '" + code + "') AND code = '" + code + "'  \
          UNION \
          SELECT date,close,ema_short,ema_long,dif,dea,macd FROM " + table_name + " \
          WHERE date >= (SELECT min(date) FROM " + table_name + " \
-         WHERE macd IS NULL ) AND code = '" + code + "'  \
+         WHERE macd IS NULL AND code = '" + code + "') AND code = '" + code + "'  \
          ) b\
          ORDER BY b.date", con=self.__engine)
         return data
 
     def fill_macd(self, code, k_type):
         try:
-            cp = zeus_db.get_date_need_to_macd(code, k_type)
-            if len(cp) <= 0:
+            df = zeus_db.get_date_need_to_macd(code, k_type)
+            if len(df) <= 0:
                 return
 
-            base = cp[:1]
-            if base['macd'][0] is None:
-                macd_list = bm.macd(cp['date'].values, cp['close'].values)
+            base = df[:1]
+            if base['macd'] is None:
+                macd_list = bm.macd(df['date'].values, df['close'].values)
             else:
-                cp = cp.drop(0)
-                if len(cp) <= 0:
+                df = df.drop(0)
+                if len(df) <= 0:
                     return
-                macd_list = bm.macd(cp['date'].values, cp['close'].values,
+                macd_list = bm.macd(df['date'].values, df['close'].values,
                                     base['ema_short'][0], base['ema_long'][0], base['dea'][0])
 
             conn = self.__engine.connect()
             table_name = 'hist_' + k_type
             for index, row in macd_list.iterrows():
                 sql = "UPDATE %s SET ema_short=%f,ema_long=%f,dea=%f,dif=%f,macd=%f WHERE date='%s' and code='%s'" \
-                      % (
-                          table_name, row['ema_short'], row['ema_long'], row['dea'], row['dif'], row['macd'],
-                          row['date'],
-                          code)
+                      % (table_name, row['ema_short'], row['ema_long'], row['dea'], row['dif'], row['macd'],
+                         row['date'],
+                         code)
                 conn.execute(sql)
         except Exception as e:
             print(":", e, code)
@@ -237,7 +231,7 @@ class ZeusDB:
 
 if __name__ == '__main__':
     zeus_db = ZeusDB()
-    zeus_db.refresh_stock_list()
+    # zeus_db.refresh_stock_list()
     #    zeus_db.fetch_all_hist_k_data('30')
     # print(zeus_db.IfKTypeTimes('2017-04-27 11:05','15'))
     # zeus_db.fetch_hist_k_data('600809','15')
@@ -248,7 +242,7 @@ if __name__ == '__main__':
     #    print(macd_list)
     #    macd_list = EMA(cp['close'],12)
     #    print(macd_list)
-    #    cp = zeus_db.fetch_hist_k_data_with_macd('000099','30')
-    # cp = zeus_db.FillMACD('000001', '15')
-    zeus_db.update_k_data_with_macd('15')
+    # cp = zeus_db.fetch_hist_k_data_with_macd('600809', '30')
+    # cp = zeus_db.FillMACD('000001', '30')
+    # zeus_db.update_k_data_with_macd('15')
     zeus_db.update_k_data_with_macd('30')
