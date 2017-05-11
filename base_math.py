@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+VALID_15_TIME_LABELS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30',
+                        '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00']
+VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30', '15:00']
 
 # (当日收盘价*2+前一日EMA(12)*11)/13
 def ema(x: list, n, l=None):
@@ -135,9 +138,13 @@ def count_up_cross(backward_a: list, backward_b: list, count):
 
 
 def if_times(time, k_type):
-    k = int(k_type)
-    t = int(time[time.index(':') + 1:len(time)])
-    return t % k == 0
+    str_time = time[time.index(':') - 2: len(time)]
+    ret_val = False
+    if k_type == '15':
+        ret_val = str_time in VALID_15_TIME_LABELS;
+    if k_type == '30':
+        ret_val = str_time in VALID_30_TIME_LABELS;
+    return ret_val
 
 
 if __name__ == '__main__':

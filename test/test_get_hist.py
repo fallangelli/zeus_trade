@@ -1,5 +1,4 @@
 import multiprocessing
-import random
 import sys
 import time
 
@@ -7,29 +6,28 @@ from tornado import concurrent
 
 
 def read(q):
-    # output.write('\r complete percent:%.0f%%' % (i / total * 100))
-
-    time.sleep(random.random())
+    output = sys.stdout
+    output.write('\r complete percent:%.0f%%' % q)
+    time.sleep(3)
 
 
 def main():
     futures = set()
-    with concurrent.futures.ThreadPoolExecutor(multiprocessing.cpu_count() * 4) as executor:
-        for q in (chr(ord('A') + i) for i in range(26)):
-            future = executor.submit(read, q)
-            output = sys.stdout
-            output.write('\r Get %s from queue.' % q)
+    output = sys.stdout
+    with concurrent.futures.ThreadPoolExecutor(multiprocessing.cpu_count() * 56) as executor:
+        for i in range(260):
+            future = executor.submit(read, i)
             futures.add(future)
 
-        output.flush()
-    try:
-        for future in concurrent.futures.as_completed(futures):
-            err = future.exception()
-            if err is not None:
-                raise err
-    except KeyboardInterrupt:
-        print("stopped by hand")
-
+    # try:
+    #     for future in concurrent.futures.as_completed(futures):
+    #         err = future.exception()
+    #         if err is not None:
+    #             raise err
+    # except KeyboardInterrupt:
+    #     print("stopped by hand")
+    output.write('\n')
+    output.flush()
     print("stopped")
 
 
