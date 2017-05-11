@@ -5,6 +5,7 @@ VALID_15_TIME_LABELS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '1
                         '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00']
 VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30', '15:00']
 
+
 # (当日收盘价*2+前一日EMA(12)*11)/13
 def ema(x: list, n, l=None):
     ema_list = []
@@ -141,9 +142,9 @@ def if_times(time, k_type):
     str_time = time[time.index(':') - 2: len(time)]
     ret_val = False
     if k_type == '15':
-        ret_val = str_time in VALID_15_TIME_LABELS;
+        ret_val = str_time in VALID_15_TIME_LABELS
     if k_type == '30':
-        ret_val = str_time in VALID_30_TIME_LABELS;
+        ret_val = str_time in VALID_30_TIME_LABELS
     return ret_val
 
 
@@ -151,5 +152,5 @@ if __name__ == '__main__':
     #    dif_list = DIF(df['close'])
     #    dea_list = DEA(df['close'], dif_list)
     close = [6.38, 6.38, 6.4, 6.4, 6.38]
-    ema_list = ema(close, 26, 6.695306)
-    print(ema_list)
+    ret_list = ema(close, 26, 6.695306)
+    print(ret_list)
