@@ -30,7 +30,7 @@ XG1:IF(N>0,COUNT(REF(CON1,1)>0,N)>0,CON1);
 
 
 def fit_buy_30_pt(code, time_count_30):
-    backward_count = 25 + time_count_30
+    backward_count = 21 + time_count_30
     db = ZeusDB()
     ret_val = False
 
@@ -46,41 +46,40 @@ def fit_buy_30_pt(code, time_count_30):
         return False
 
     for index_30 in range(0, time_count_30):
+        ret_j = 0
         # 半小时敞口向上
         up_30 = df30['macd'][index_30] > df30['macd'][index_30 + 1] \
                 and (df30['dif'][index_30] - df30['dea'][index_30]) > abs(0.1 * df30['dea'][index_30])
         if not up_30:
-            break
+            continue
 
-        ret_j = 0
         up_15 = False
         for j in range(0, 2):
             ret_j = 2 * index_30 + j
             # 15分底背离
-            last_cross_index = base_math.last_cross(df15['dif'][ret_j:(ret_j + 25)].values,
-                                                    df15['dea'][ret_j:(ret_j + 25)].values)
+            last_cross_index = base_math.last_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                                    df15['dea'][ret_j:(ret_j + 21)].values)
             if last_cross_index >= backward_count:
                 break
             depart_tmp = df15['close'][last_cross_index] > df15['close'][ret_j] and df15['dif'][ret_j] > df15['dif'][
-                last_cross_index] and base_math.up_cross(df15['dif'][ret_j:(ret_j + 25)].values,
-                                                         df15['dea'][ret_j:(ret_j + 25)].values)
+                last_cross_index] and base_math.up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                                         df15['dea'][ret_j:(ret_j + 21)].values)
             if not depart_tmp:
-                break
+                continue
 
             # 二次金叉
-            back_dea = df15['dif'][ret_j:(ret_j + 25)].values
+            back_dea = df15['dif'][ret_j:(ret_j + 21)].values
             last_index = base_math.last_greater_0(back_dea)
             if last_index <= 0:
-                break
+                continue
 
-            cross_count = base_math.count_up_cross(df15['dif'][ret_j:(ret_j + 25)].values,
-                                                   df15['dea'][ret_j:(ret_j + 25)].values, last_index)
+            cross_count = base_math.count_up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                                   df15['dea'][ret_j:(ret_j + 21)].values, last_index)
             if cross_count >= 2:
                 up_15 = True
                 break
 
         if up_30 and up_15:
-            print("%d - %d" % (index_30, ret_j))
             print("%s - 30M: %s , 15M: %s" % (code, df30['date'][index_30], df15['date'][ret_j]))
             ret_val = True
 
@@ -94,27 +93,27 @@ if __name__ == '__main__':
 
     print('analysis start time : %s' % time.strftime('%Y-%m-%d %H:%M:%S'))
 
-    #    task_pool = threadpool.ThreadPool(20)
-    #    request_list=[]#存放任务列表
-    #    i = 1
-    #    for stock in query:
-    #        if (stock.code,64):
-    #            request_list.append(([stock.code,64],None))
-    #            i = i+1
-    #
-    #    requests = threadpool.makeRequests(moudle.fit_buy_30_pt, request_list)
-    #    [task_pool.putRequest(req) for req in requests]
-    #    task_pool.wait()
-    #    print('analysis end time : %s' % time.strftime('%Y-%m-%d %H:%M:%S') )
-    #
+    # futures = set()
+    # output = sys.stdout
+    # i = 0
+    # with concurrent.futures.ThreadPoolExecutor(multiprocessing.cpu_count() * 4) as executor:
+    #     for stock in query:
+    #         future = executor.submit(fit_buy_30_pt, stock.code,12)
+    #         futures.add(future)
+    #         output.write('\r complete percent:%.0f%%' % (i / total * 100))
+    #         i = i + 1
+    #     output.write('\n')
+    #     output.flush()
+
     i = 0
     output = sys.stdout
     for stock in query:
-        fit_buy_30_pt(stock.code, 64)
-
+        fit_buy_30_pt(stock.code, 12)
         output.write('\r complete percent:%.0f%%' % (i / total * 100))
         i = i + 1
     output.flush()
+
+    # fit_buy_30_pt('000008', 8)
 
     print('end time : %s' % time.strftime('%Y-%m-%d %H:%M:%S'))
     #        if moudle.fit_buy_30_pt(stock.code,8):

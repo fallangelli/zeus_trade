@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import tushare as ts
 
 
 # (当日收盘价*2+前一日EMA(12)*11)/13
@@ -142,10 +141,8 @@ def if_times(time, k_type):
 
 
 if __name__ == '__main__':
-    df = ts.get_k_data('603603')
-
     #    dif_list = DIF(df['close'])
     #    dea_list = DEA(df['close'], dif_list)
-    macd_list12 = ema(df['close'], 12, 10.244718404914911)
-    macd_list26 = ema(df['close'], 26)
-    print(macd_list12, '\n', macd_list26)
+    close = [6.38, 6.38, 6.4, 6.4, 6.38]
+    ema_list = ema(close, 26, 6.695306)
+    print(ema_list)
