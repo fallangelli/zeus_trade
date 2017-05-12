@@ -2,7 +2,7 @@ import sys
 import time
 
 import base_math
-from zeus_db import ZeusDB
+from base_db import BaseDB
 
 '''
 {30分敞口向上，0 轴上}
@@ -31,7 +31,7 @@ XG1:IF(N>0,COUNT(REF(CON1,1)>0,N)>0,CON1);
 
 def fit_buy_30_pt(code, time_count_30):
     backward_count = 21 + time_count_30
-    db = ZeusDB()
+    db = BaseDB()
     ret_val = False
 
     max_date = db.get_max_macd(code)
@@ -48,8 +48,8 @@ def fit_buy_30_pt(code, time_count_30):
     for index_30 in range(0, time_count_30):
         ret_j = 0
         # 半小时敞口向上
-        up_30 = df30['macd'][index_30] > df30['macd'][index_30 + 1] \
-                and (df30['dif'][index_30] - df30['dea'][index_30]) > abs(0.1 * df30['dea'][index_30])
+        up_30 = (df30['macd'][index_30] > df30['macd'][index_30 + 1] and
+                 (df30['dif'][index_30] - df30['dea'][index_30]) > abs(0.1 * df30['dea'][index_30]))
         if not up_30:
             continue
 
@@ -87,8 +87,8 @@ def fit_buy_30_pt(code, time_count_30):
 
 
 if __name__ == '__main__':
-    zeus_db = ZeusDB()
-    query = zeus_db.get_all_stock_list()
+    base_db = BaseDB()
+    query = base_db.get_all_stock_list()
     total = query.count()
 
     print('analysis start time : %s' % time.strftime('%Y-%m-%d %H:%M:%S'))
