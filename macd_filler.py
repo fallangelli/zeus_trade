@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import multiprocessing
 import sys
 
@@ -18,7 +19,7 @@ class MACDFiller:
         self.__pool_size_cpu_times = cf.getint('thread_conf', 'pool_size_cpu_times')
 
     def fill_macd_all(self, k_type):
-        sys.stdout.write('filling all macd starting ...\n')
+        sys.stdout.write(datetime.now() + 'filling all macd starting ...\n')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
         futures = set()
@@ -31,7 +32,7 @@ class MACDFiller:
                 futures.add(future)
                 i = i + 1
 
-        sys.stdout.write('\nfilling all macd ended\n')
+        sys.stdout.write(datetime.now() + 'filling all macd ended\n')
         sys.stdout.flush()
 
     def fill_macd(self, all_data: pd.DataFrame, code, k_type, curr, total):
@@ -68,7 +69,8 @@ class MACDFiller:
 if __name__ == '__main__':
     base_db = BaseDB()
     mf = MACDFiller(base_db)
-    bd = base_db.get_macd_data('000001', '30')
-    mf.fill_macd(bd, '000001', '30', 1, 1)
+    mf.fill_macd_all('30')
+    mf.fill_macd_all('15')
 
-    # mf.fill_macd_all('30')
+    # bd = base_db.get_macd_data('000066', '15')
+    # mf.fill_macd(bd, '000066', '15', 1, 1)

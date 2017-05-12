@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import multiprocessing
 import sys
 
@@ -18,7 +19,7 @@ class KDataFetcher:
         self.__pool_size_cpu_times = cf.getint('thread_conf', 'pool_size_cpu_times')
 
     def fetch_hist_min_label_k_data_all(self, k_type):
-        sys.stdout.write('fetching all data starting ...\n')
+        sys.stdout.write(datetime.now() + 'fetching all data starting ...\n')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
         futures = set()
@@ -32,14 +33,14 @@ class KDataFetcher:
                 futures.add(future)
                 i = i + 1
 
-        sys.stdout.write('\nfetching all data ended\n')
+        sys.stdout.write(datetime.now() + 'fetching all data ended\n')
         sys.stdout.flush()
 
     def fetch_hist_min_label_k_data(self, all_dates: pd.DataFrame, code, k_type, curr, total):
         sys.stdout.write('\r fetching %s hist %s k_data, %d - %d' % (code, k_type, curr, total))
         try:
             table_name = 'hist_' + k_type
-            df = ts.get_k_data(code, autype='hfq', ktype=k_type)
+            df = ts.get_k_data(code=code, autype='hfq', ktype=k_type, retry_count=30, pause=3)
             stock_date = all_dates[all_dates['code'] == code]
             if len(stock_date) > 0:
                 max_date = stock_date['date'].max()
@@ -52,5 +53,8 @@ class KDataFetcher:
 if __name__ == '__main__':
     base_db = BaseDB()
     sf = KDataFetcher(base_db)
-    bd = base_db.get_macd_data('000001', '30')
-    sf.fetch_hist_min_label_k_data(bd, '000001', '30', 1, 1)
+    # sf.fetch_hist_min_label_k_data_all('30')
+    # sf.fetch_hist_min_label_k_data_all('15')
+
+    bd = base_db.get_macd_data('000066', '15')
+    sf.fetch_hist_min_label_k_data(bd, '000066', '15', 1, 1)

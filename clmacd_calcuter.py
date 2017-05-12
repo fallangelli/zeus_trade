@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import multiprocessing
 import sys
 
@@ -48,11 +49,15 @@ def fit_buy_30_pt(df_15: pd.DataFrame, df_30: pd.DataFrame, code, time_count_30,
         df15 = df_15[df_15['code'] == code]
         df30 = df_30[df_30['code'] == code]
         if len(df_15) <= 1 or len(df_30) <= 1:
+            print("code %s data length error" % code)
             return False
         df15.dropna()
         df30.dropna()
 
         max_date = get_max_valid_date_between(df15, df30)
+        if max_date.strip() == '':
+            print("code %s cann't get between date" % code)
+            return False
 
         df15 = df15[df15['date'] <= max_date]
         df30 = df30[df30['date'] <= max_date]
@@ -116,7 +121,7 @@ class CLMACDCalculator:
         self.__pool_size_cpu_times = cf.getint('thread_conf', 'pool_size_cpu_times')
 
     def find_targets(self):
-        sys.stdout.write('finding targets starting ...\n')
+        sys.stdout.write(datetime.now() + 'finding targets starting ...\n')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
         futures = set()
@@ -130,7 +135,7 @@ class CLMACDCalculator:
                 futures.add(future)
                 i = i + 1
 
-        sys.stdout.write('\nfinding targets ended\n')
+        sys.stdout.write(datetime.now() + 'finding targets ended\n')
         sys.stdout.flush()
 
 
@@ -139,7 +144,7 @@ if __name__ == '__main__':
     cc = CLMACDCalculator(bd)
     # cc.find_targets()
 
-    d30 = bd.get_macd_data('000001', '30')
-    d15 = bd.get_macd_data('000001', '15')
-    ret = fit_buy_30_pt(d15, d30, '000001', 8, 1, 1)
+    d30 = bd.get_macd_data('300652', '30')
+    d15 = bd.get_macd_data('300652', '15')
+    ret = fit_buy_30_pt(d15, d30, '300652', 8, 1, 1)
     print(ret)
