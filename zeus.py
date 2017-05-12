@@ -3,7 +3,7 @@ from datetime import datetime
 from time import sleep
 
 from base_db import BaseDB
-from data_fetcher import DataFetcher
+from kdata_fetcher import KDataFetcher
 from macd_filler import MACDFiller
 from stock_base_fetcher import StockBaseFetcher
 
@@ -14,7 +14,7 @@ logging.basicConfig(
 
 
 class Zeus(object):
-    def __init__(self, db: BaseDB, stock_base_fetcher: StockBaseFetcher, data_fetcher: DataFetcher,
+    def __init__(self, db: BaseDB, stock_base_fetcher: StockBaseFetcher, data_fetcher: KDataFetcher,
                  macd_filler: MACDFiller, step_interval=5):
         self.__db = db
         self.__step_interval = step_interval
@@ -57,7 +57,7 @@ class Zeus(object):
 if __name__ == '__main__':
     bd = BaseDB()
     sbf = StockBaseFetcher(bd)
-    df = DataFetcher(bd)
+    df = KDataFetcher(bd)
     mf = MACDFiller(bd)
     zeus = Zeus(bd, sbf, df, mf)
     # 开始运行

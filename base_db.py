@@ -48,12 +48,17 @@ class BaseDB:
         session.close()
         return ret_list
 
-    def get_latest_macd(self, code, k_type, max_date, count=8):
+    def get_all_macd_data(self, k_type):
+        table_name = 'hist_' + k_type
+        data = pd.read_sql_table(table_name, self.get_engine(),
+                                 columns=['code', 'date', 'close', 'ema_short', 'ema_long', 'dif', 'dea', 'macd'])
+        return data
+
+    def get_macd_data(self, code, k_type):
         table_name = 'hist_' + k_type
         data = pd.read_sql_query(
-            "SELECT b.* FROM ( SELECT `date`,close,dif,dea,macd FROM  " +
-            table_name + " WHERE date <= '" + max_date + "' AND code='" +
-            code + "' ORDER BY date DESC  LIMIT " + str(count) + ") b ", con=self.__engine)
+            "SELECT code,`date`,close,ema_short,ema_long,dif,dea,macd FROM  " + table_name + " WHERE  code='" + code + "'",
+            con=self.__engine)
         return data
 
     def get_max_macd(self, code):
@@ -91,6 +96,16 @@ class BaseDB:
         ret_val = pd.read_sql_query('SELECT code,date FROM ' + table_name, con=self.__engine)
         return ret_val
 
+    def get_date_list(self, code, k_type):
+        table_name = 'hist_' + k_type
+        ret_val = pd.read_sql_query("SELECT code,date FROM " + table_name + " where code = '" + code + "'",
+                                    con=self.__engine)
+        return ret_val
+
 
 if __name__ == '__main__':
-    base_db = BaseDB()
+    try:
+        base_db = BaseDB()
+        ret_data = base_db.get_all_macd_data('30')
+    except Exception as e:
+        print(":", e.__repr__())

@@ -50,7 +50,8 @@ class MACDFiller:
                 if len(data) <= 0:
                     return
                 macd_list = bm.macd(d=data['date'].values, x=data['close'].values,
-                                    short_l=base['ema_short'][0], long_l=base['ema_long'][0], dea_l=base['dea'][0])
+                                    short_l=base['ema_short'].get(0), long_l=base['ema_long'].get(0),
+                                    dea_l=base['dea'].get(0))
 
             table_name = 'hist_' + k_type
             sql = ''
@@ -61,10 +62,13 @@ class MACDFiller:
             self.__db.get_engine().execute(sql)
 
         except Exception as e:
-            print(":", e.__str__(), code)
+            print(":", e.__repr__(), code)
 
 
 if __name__ == '__main__':
     base_db = BaseDB()
     mf = MACDFiller(base_db)
-    mf.fill_macd_all('30')
+    bd = base_db.get_macd_data('000001', '30')
+    mf.fill_macd(bd, '000001', '30', 1, 1)
+
+    # mf.fill_macd_all('30')

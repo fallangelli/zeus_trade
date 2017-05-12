@@ -6,11 +6,10 @@ import pandas as pd
 import tushare as ts
 from tornado import concurrent
 
-import base_math as bm
 from base_db import BaseDB
 
 
-class DataFetcher:
+class KDataFetcher:
     def __init__(self, db: BaseDB):
         super().__init__()
         self.__db = db
@@ -39,32 +38,19 @@ class DataFetcher:
     def fetch_hist_min_label_k_data(self, all_dates: pd.DataFrame, code, k_type, curr, total):
         sys.stdout.write('\r fetching %s hist %s k_data, %d - %d' % (code, k_type, curr, total))
         try:
-            stock_date = all_dates[all_dates['code'] == code]
-            list_date = stock_date['date'].values
-            if len(list_date) <= 1:
-                return
             table_name = 'hist_' + k_type
-
             df = ts.get_k_data(code, autype='hfq', ktype=k_type)
-            if len(df) <= 0:
-                return
-
-            list_to_add = []
-            for index, row in df.iterrows():
-                if not bm.if_times(row['date'], k_type):
-                    continue
-                if not row['date'] in list_date:
-                    list_to_add.append(row)
-            if len(list_to_add) <= 0:
-                return
-
-            df_to_add = pd.DataFrame(list_to_add)
-            df_to_add.to_sql(table_name, self.__db.get_engine(), if_exists='append', index=False)
+            stock_date = all_dates[all_dates['code'] == code]
+            if len(stock_date) > 0:
+                max_date = stock_date['date'].max()
+                df = df[df['date'] > max_date]
+            df.to_sql(table_name, self.__db.get_engine(), if_exists='append', index=False)
         except Exception as e:
-            print(":", e.__str__(), code)
+            print(":", e.__repr__(), code)
 
 
 if __name__ == '__main__':
     base_db = BaseDB()
-    sf = DataFetcher(base_db)
-    sf.fetch_hist_min_label_k_data_all('30')
+    sf = KDataFetcher(base_db)
+    bd = base_db.get_macd_data('000001', '30')
+    sf.fetch_hist_min_label_k_data(bd, '000001', '30', 1, 1)
