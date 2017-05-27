@@ -1,8 +1,11 @@
 import logging
 from datetime import datetime
-from time import sleep
+
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 from base_db import BaseDB
+from base_mail import ZeusMail
+from clmacd_calcuter import CLMACDCalculator
 from kdata_fetcher import KDataFetcher
 from macd_filler import MACDFiller
 from stock_base_fetcher import StockBaseFetcher
@@ -15,12 +18,14 @@ logging.basicConfig(
 
 class Zeus(object):
     def __init__(self, db: BaseDB, stock_base_fetcher: StockBaseFetcher, data_fetcher: KDataFetcher,
-                 macd_filler: MACDFiller, step_interval=5):
+                 macd_filler: MACDFiller, cl_calculator: CLMACDCalculator, step_interval=5):
         self.__db = db
+        self.__scheduler = BlockingScheduler()
         self.__step_interval = step_interval
         self.__data_fetcher = data_fetcher
         self.__stock_base_fetcher = stock_base_fetcher
         self.__macd_filler = macd_filler
+        self._cl_calculator = cl_calculator
         self.__market_close_time = datetime.now().replace(hour=15, minute=10, second=00)
 
     # 交易系统退出的条件, 如果判读符合条件,则退出交易系统
@@ -31,27 +36,43 @@ class Zeus(object):
         return False
 
     def start(self):
-        while not self.ready_to_exit():
-            if self.__db.get_need_to_refresh_list():
-                logging.info('超过一天未刷新列表，开始执行刷新!')
-                self.__stock_base_fetcher.refresh_stock_list()
+        # 每月1号清理历史数据
 
-            logging.debug('updating data')
-            sleep(self.__step_interval)
+        # 每周3更新列表
+        self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='*/3')
 
-    '''
-      更新低频后复权历史数据
-      k_type - 默认为D日线数据
-              D=日k线 W=周 M=月 
-              5=5分钟 15=15分钟 
-              30=30分钟 60=60分钟
-      '''
+        # 工作日10:31,13:31更新数据，计算趋势和B/S目标
+        self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='1,2,3,4,5', hour='10,13,16', minute='31,46')
 
-    def update_k_data_with_macd(self, k_type):
-        self.__data_fetcher.fetch_hist_min_label_k_data_all(k_type)
-        self.__macd_filler.fill_macd_all(k_type)
+        try:
+            self.__scheduler.start()
+        except (KeyboardInterrupt, SystemExit):
+            self.__scheduler.shutdown()
 
-        self.__db.update_log_time(2, 'all_hist_fetch_time')
+    def refresh_stock_list(self):
+        logging.info('refreshing stock list data')
+        self.__stock_base_fetcher.refresh_stock_list();
+
+    def refresh_targets(self, end_time: datetime = None):
+        # logging.info('fetching all hist min k_data data with macd')
+        # self.__data_fetcher.fetch_hist_min_label_k_data_all('30')
+        # self.__data_fetcher.fetch_hist_min_label_k_data_all('15')
+        # self.__macd_filler.fill_macd_all('30')
+        # self.__macd_filler.fill_macd_all('15')
+
+        # logging.info('finding fit 30 CLMACD targets')
+        # self._cl_calculator.find_targets()
+        # self.__db.update_log_time('all_hist_with_macd_fetch_time')
+
+        curr_time = datetime.now()
+        if end_time is not None:
+            curr_time = end_time
+
+        latest_bp = self.__db.get_latest_bp(curr_time)
+        self.__db.merge_clmacd_result(curr_time, len(latest_bp), 0)
+
+        mail = ZeusMail()
+        mail.send_mail(curr_time, latest_bp, None)
 
 
 if __name__ == '__main__':
@@ -59,6 +80,11 @@ if __name__ == '__main__':
     sbf = StockBaseFetcher(bd)
     df = KDataFetcher(bd)
     mf = MACDFiller(bd)
-    zeus = Zeus(bd, sbf, df, mf)
+    cc = CLMACDCalculator(bd)
+
+    zeus = Zeus(bd, sbf, df, mf, cc)
+    st = datetime.strptime('2017-05-27 10:40:00', '%Y-%m-%d %H:%M:%S')
+    zeus.refresh_targets(st)
+
     # 开始运行
-    zeus.start()
+    # zeus.start()

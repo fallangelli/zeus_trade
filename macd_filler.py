@@ -1,7 +1,7 @@
 import configparser
-import datetime
 import multiprocessing
 import sys
+from datetime import datetime
 
 import pandas as pd
 from tornado import concurrent
@@ -19,7 +19,7 @@ class MACDFiller:
         self.__pool_size_cpu_times = cf.getint('thread_conf', 'pool_size_cpu_times')
 
     def fill_macd_all(self, k_type):
-        sys.stdout.write(datetime.now() + 'filling all macd starting ...\n')
+        sys.stdout.write(datetime.now().__str__() + 'filling ' + k_type + ' all macd starting ...\n')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
         futures = set()
@@ -32,7 +32,7 @@ class MACDFiller:
                 futures.add(future)
                 i = i + 1
 
-        sys.stdout.write(datetime.now() + 'filling all macd ended\n')
+        sys.stdout.write(datetime.now().__str__() + 'filling ' + k_type + '  all macd ended\n')
         sys.stdout.flush()
 
     def fill_macd(self, all_data: pd.DataFrame, code, k_type, curr, total):

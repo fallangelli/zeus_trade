@@ -1,7 +1,7 @@
 import configparser
-import datetime
 import multiprocessing
 import sys
+from datetime import datetime
 
 import pandas as pd
 from tornado import concurrent
@@ -42,76 +42,6 @@ def get_max_valid_date_between(df15: pd.DataFrame, df30: pd.DataFrame):
     return ""
 
 
-def fit_buy_30_pt(df_15: pd.DataFrame, df_30: pd.DataFrame, code, time_count_30, curr, total):
-    sys.stdout.write('\r calculating %s CLMACD, %d - %d' % (code, curr, total))
-    backward_count = 21 + time_count_30
-    try:
-        df15 = df_15[df_15['code'] == code]
-        df30 = df_30[df_30['code'] == code]
-        if len(df_15) <= 1 or len(df_30) <= 1:
-            print("code %s data length error" % code)
-            return False
-        df15.dropna()
-        df30.dropna()
-
-        max_date = get_max_valid_date_between(df15, df30)
-        if max_date.strip() == '':
-            print("code %s cann't get between date" % code)
-            return False
-
-        df15 = df15[df15['date'] <= max_date]
-        df30 = df30[df30['date'] <= max_date]
-        df15 = df15.sort_values(by=['date'], axis=0, ascending=False)
-        df30 = df30.sort_values(by=['date'], axis=0, ascending=False)
-        df30 = df30[0:backward_count + 1]
-        df15 = df15[0:(backward_count + 1) * 2]
-
-        ret_val = False
-        for index_30 in range(0, time_count_30):
-            ret_j = 0
-            # 半小时敞口向上
-            up_30 = (df30['macd'].values[index_30] > df30['macd'].values[index_30 + 1] and
-                     (df30['dif'].values[index_30] - df30['dea'].values[index_30]) > abs(
-                         0.1 * df30['dea'].values[index_30]))
-            if not up_30:
-                continue
-
-            up_15 = False
-            for j in range(0, 2):
-                ret_j = 2 * index_30 + j
-                # 15分底背离
-                last_cross_index = bm.last_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                 df15['dea'][ret_j:(ret_j + 21)].values)
-                if last_cross_index >= backward_count:
-                    break
-                depart_tmp = df15['close'].values[last_cross_index] > df15['close'].values[ret_j] and \
-                             df15['dif'].values[ret_j] > df15['dif'].values[last_cross_index] and \
-                             bm.up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                         df15['dea'][ret_j:(ret_j + 21)].values)
-                if not depart_tmp:
-                    continue
-
-                # 二次金叉
-                back_dea = df15['dif'][ret_j:(ret_j + 21)].values
-                last_index = bm.last_greater_0(back_dea)
-                if last_index <= 0:
-                    continue
-
-                cross_count = bm.count_up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                df15['dea'][ret_j:(ret_j + 21)].values, last_index)
-                if cross_count >= 2:
-                    up_15 = True
-                    break
-
-            if up_30 and up_15:
-                print("%s - 30M: %s , 15M: %s" % (code, df30['date'].values[index_30], df15['date'].values[ret_j]))
-                ret_val = True
-
-        return ret_val
-    except Exception as e:
-        print(":", e.__repr__(), code)
-
-
 class CLMACDCalculator:
     def __init__(self, db: BaseDB):
         super().__init__()
@@ -121,30 +51,102 @@ class CLMACDCalculator:
         self.__pool_size_cpu_times = cf.getint('thread_conf', 'pool_size_cpu_times')
 
     def find_targets(self):
-        sys.stdout.write(datetime.now() + 'finding targets starting ...\n')
+        sys.stdout.write(datetime.now().__str__() + 'finding targets starting ...\n')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
         futures = set()
-        df30 = bd.get_all_macd_data('30')
-        df15 = bd.get_all_macd_data('15')
+        df30 = self.__db.get_all_macd_data('30')
+        df15 = self.__db.get_all_macd_data('15')
         i = 1
         with concurrent.futures.ThreadPoolExecutor(
                         multiprocessing.cpu_count() * self.__pool_size_cpu_times) as executor:
             for stock in stock_list:
-                future = executor.submit(fit_buy_30_pt, df15, df30, stock.code, 8, i, list_size)
+                future = executor.submit(self.fit_buy_30_pt, df15, df30, stock.code, 8, i, list_size)
                 futures.add(future)
                 i = i + 1
 
-        sys.stdout.write(datetime.now() + 'finding targets ended\n')
+        sys.stdout.write(datetime.now().__str__() + 'finding targets ended\n')
         sys.stdout.flush()
 
+    def fit_buy_30_pt(self, df_15: pd.DataFrame, df_30: pd.DataFrame, code, time_count_30, curr, total):
+        sys.stdout.write('\r calculating %s CLMACD, %d - %d' % (code, curr, total))
+        backward_count = 21 + time_count_30
+        try:
+            df15 = df_15[df_15['code'] == code]
+            df30 = df_30[df_30['code'] == code]
+            if len(df_15) <= 1 or len(df_30) <= 1:
+                print("code %s data length error" % code)
+                return False
+            df15.dropna()
+            df30.dropna()
+
+            max_date = get_max_valid_date_between(df15, df30)
+            if max_date.strip() == '':
+                print("code %s cann't get between date" % code)
+                return False
+
+            df15 = df15[df15['date'] <= max_date]
+            df30 = df30[df30['date'] <= max_date]
+            df15 = df15.sort_values(by=['date'], axis=0, ascending=False)
+            df30 = df30.sort_values(by=['date'], axis=0, ascending=False)
+            df30 = df30[0:backward_count + 1]
+            df15 = df15[0:(backward_count + 1) * 2]
+
+            ret_val = False
+
+            for index_30 in range(0, time_count_30):
+                ret_j = 0
+                # 半小时敞口向上
+                up_30 = (df30['macd'].values[index_30] > df30['macd'].values[index_30 + 1] and
+                         (df30['dif'].values[index_30] - df30['dea'].values[index_30]) > abs(
+                             0.1 * df30['dea'].values[index_30]))
+                if not up_30:
+                    continue
+
+                up_15 = False
+                for j in range(0, 2):
+                    ret_j = 2 * index_30 + j
+                    # 15分底背离
+                    last_cross_index = bm.last_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                                     df15['dea'][ret_j:(ret_j + 21)].values)
+                    if last_cross_index >= backward_count:
+                        break
+                    depart_tmp = df15['close'].values[last_cross_index] > df15['close'].values[ret_j] and \
+                                 df15['dif'].values[ret_j] > df15['dif'].values[last_cross_index] and \
+                                 bm.up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                             df15['dea'][ret_j:(ret_j + 21)].values)
+                    if not depart_tmp:
+                        continue
+
+                    # 二次金叉
+                    back_dea = df15['dif'][ret_j:(ret_j + 21)].values
+                    last_index = bm.last_greater_0(back_dea)
+                    if last_index <= 0:
+                        continue
+
+                    cross_count = bm.count_up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
+                                                    df15['dea'][ret_j:(ret_j + 21)].values, last_index)
+                    if cross_count >= 2:
+                        up_15 = True
+                        break
+
+                if up_30 and up_15:
+                    print("%s - 30M: %s , 15M: %s" % (code, df30['date'].values[index_30], df15['date'].values[ret_j]))
+
+                    self.__db.merge_clmacd_bp(id_time=df15['date'].values[ret_j], code=code,
+                                              price=float(df15['close'].values[ret_j]))
+                    ret_val = True
+
+            return ret_val
+        except Exception as e:
+            print(":", e.__repr__(), code)
 
 if __name__ == '__main__':
     bd = BaseDB()
     cc = CLMACDCalculator(bd)
-    # cc.find_targets()
+    cc.find_targets()
 
-    d30 = bd.get_macd_data('300652', '30')
-    d15 = bd.get_macd_data('300652', '15')
-    ret = fit_buy_30_pt(d15, d30, '300652', 8, 1, 1)
-    print(ret)
+    # d30 = bd.get_macd_data('300652', '30')
+    # d15 = bd.get_macd_data('300652', '15')
+    # ret = fit_buy_30_pt(d15, d30, '300652', 8, 1, 1)
+    # print(ret)

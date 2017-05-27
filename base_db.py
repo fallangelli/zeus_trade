@@ -1,12 +1,12 @@
 import configparser
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from base_model import TimeLog, StockBasic
+from base_model import TimeLog, StockBasic, ClmacdBp, ClmacdResult
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -29,15 +29,15 @@ class BaseDB:
 
         self.__engine = create_engine(
             'mysql+pymysql://' + username + ':' + password + '@' + server + '/' + database + '?charset=utf8',
-            pool_size=128, pool_recycle=300)
+            pool_size=1024, pool_recycle=300)
 
     def get_engine(self):
         return self.__engine
 
-    def update_log_time(self, item, name):
+    def update_log_time(self, log_type):
         engine = self.__engine
         session = sessionmaker(bind=engine)()
-        time_log = TimeLog(item, name, last_modify_time=datetime.now())
+        time_log = TimeLog(type=log_type, last_modify_time=datetime.now())
         session.merge(time_log)
         session.commit()
         session.close()
@@ -102,10 +102,45 @@ class BaseDB:
                                     con=self.__engine)
         return ret_val
 
+    def get_macd_data(self, code, k_type):
+        table_name = 'hist_' + k_type
+        data = pd.read_sql_query(
+            "SELECT code,`date`,close,ema_short,ema_long,dif,dea,macd FROM  " + table_name + " WHERE  code='" + code + "'",
+            con=self.__engine)
+        return data
+
+    def merge_clmacd_result(self, id_time, bp_count, sp_count):
+        engine = self.__engine
+        session = sessionmaker(bind=engine)()
+        result = ClmacdResult(id_time=id_time, bp_count=bp_count, sp_count=sp_count)
+        session.merge(result)
+        session.commit()
+        session.close()
+
+    def get_latest_bp(self, end_time: datetime):
+        delta = timedelta(days=1)
+        start_time = end_time - delta
+        data = pd.read_sql_query(
+            "SELECT * FROM clmacd_bp WHERE '" + start_time.strftime(
+                '%Y-%m-%d %H:%M:%S') + "' < id_time AND id_time<='" + end_time.strftime(
+                '%Y-%m-%d %H:%M:%S') + "' ORDER BY id_time",
+            con=self.__engine)
+        return data
+
+    def merge_clmacd_bp(self, id_time, code, price):
+        engine = self.__engine
+        session = sessionmaker(bind=engine)()
+        bp = ClmacdBp(id_time=id_time, code=code, price=price)
+        session.merge(bp)
+        session.commit()
+        session.close()
+
 
 if __name__ == '__main__':
     try:
         base_db = BaseDB()
-        ret_data = base_db.get_all_macd_data('30')
+        st = datetime.strptime('2017-05-27 10:40:00', '%Y-%m-%d %H:%M:%S')
+        # st = datetime.now()
+        base_db.get_latest_bp(st)
     except Exception as e:
         print(":", e.__repr__())
