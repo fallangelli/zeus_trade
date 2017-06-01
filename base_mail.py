@@ -24,6 +24,9 @@ class ZeusMail:
         for index, row in bp_data_frame.iterrows():
             text += '<tr align="center" style="background:darkred"><td>买点</td>'
             text += '<td>%s</td><td>%s</td><td>%.3f</td></tr>' % (row['id_time'], row['code'], row['price'])
+        for index, row in sp_data_frame.iterrows():
+            text += '<tr align="center" style="background:darkred"><td>买点</td>'
+            text += '<td>%s</td><td>%s</td><td>%.3f</td></tr>' % (row['id_time'], row['code'], row['price'])
         text += '</table></body></html>'
 
         msg = MIMEText(text, 'html', 'utf-8')

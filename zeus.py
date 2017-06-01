@@ -51,18 +51,18 @@ class Zeus(object):
 
     def refresh_stock_list(self):
         logging.info('refreshing stock list data')
-        self.__stock_base_fetcher.refresh_stock_list();
+        self.__stock_base_fetcher.refresh_stock_list()
 
     def refresh_targets(self, end_time: datetime = None):
-        # logging.info('fetching all hist min k_data data with macd')
-        # self.__data_fetcher.fetch_hist_min_label_k_data_all('30')
-        # self.__data_fetcher.fetch_hist_min_label_k_data_all('15')
-        # self.__macd_filler.fill_macd_all('30')
-        # self.__macd_filler.fill_macd_all('15')
+        logging.info('fetching all hist min k_data data with macd')
+        self.__data_fetcher.fetch_hist_min_label_k_data_all('30')
+        self.__data_fetcher.fetch_hist_min_label_k_data_all('15')
+        self.__macd_filler.fill_macd_all('30')
+        self.__macd_filler.fill_macd_all('15')
 
-        # logging.info('finding fit 30 CLMACD targets')
-        # self._cl_calculator.find_targets()
-        # self.__db.update_log_time('all_hist_with_macd_fetch_time')
+        logging.info('finding fit 30 CLMACD targets')
+        self._cl_calculator.find_targets()
+        self.__db.update_log_time('all_hist_with_macd_fetch_time')
 
         curr_time = datetime.now()
         if end_time is not None:
@@ -71,8 +71,11 @@ class Zeus(object):
         latest_bp = self.__db.get_latest_bp(curr_time)
         self.__db.merge_clmacd_result(curr_time, len(latest_bp), 0)
 
+        latest_sp = self.__db.get_latest_sp(curr_time)
+        self.__db.merge_clmacd_result(curr_time, len(latest_sp), 0)
+
         mail = ZeusMail()
-        mail.send_mail(curr_time, latest_bp, None)
+        mail.send_mail(curr_time, latest_bp, latest_sp)
 
 
 if __name__ == '__main__':
@@ -83,7 +86,7 @@ if __name__ == '__main__':
     cc = CLMACDCalculator(bd)
 
     zeus = Zeus(bd, sbf, df, mf, cc)
-    st = datetime.strptime('2017-05-27 10:40:00', '%Y-%m-%d %H:%M:%S')
+    st = datetime.strptime('2017-06-01 15:05:00', '%Y-%m-%d %H:%M:%S')
     zeus.refresh_targets(st)
 
     # 开始运行

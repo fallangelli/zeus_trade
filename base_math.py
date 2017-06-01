@@ -79,7 +79,17 @@ def up_cross(backward_a: list, backward_b: list):
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:
         return False
-    if backward_a[0] >= backward_b[0] and backward_a[1] <= backward_b[1]:
+    if backward_a[0] > backward_b[0] and backward_a[1] <= backward_b[1]:
+        return True
+    return False
+
+
+def down_cross(backward_a: list, backward_b: list):
+    size_a = len(backward_a)
+    size_b = len(backward_b)
+    if size_a <= 1 or size_b <= 1:
+        return False
+    if backward_a[0] < backward_b[0] and backward_a[1] >= backward_b[1]:
         return True
     return False
 
@@ -91,11 +101,11 @@ def last_cross(backward_a: list, backward_b: list):
     i = 0
     if size_a > 1 or size_b > 1:
         if backward_a[0] > backward_b[0]:
-            while i < size_a and i < size_b and backward_a[0] < backward_b[0]:
+            while i < size_a and i < size_b and backward_a[i] >= backward_b[i]:
                 i = i + 1
             ret_val = i
         if backward_a[0] < backward_b[0]:
-            while i < size_a and i < size_b and backward_a[0] > backward_b[0]:
+            while i < size_a and i < size_b and backward_a[i] <= backward_b[i]:
                 i = i + 1
             ret_val = i
         if backward_a[0] == backward_b[0]:
@@ -106,14 +116,31 @@ def last_cross(backward_a: list, backward_b: list):
 def last_greater_0(x: list):
     size = len(x)
     ret_val = -1
-    if size <= 1 or x[0] >= 0:
+    if size <= 1 or x[0] > 0:
         ret_val = -1
-
     i = 1
     while i < size - 1:
         if x[i] >= 0:
             ret_val = i
-        i = i + 1
+            break
+        else:
+            i = i + 1
+
+    return ret_val
+
+
+def last_less_0(x: list):
+    size = len(x)
+    ret_val = -1
+    if size <= 1 or x[0] < 0:
+        ret_val = -1
+    i = 1
+    while i < size - 1:
+        if x[i] <= 0:
+            ret_val = i
+            break
+        else:
+            i = i + 1
 
     return ret_val
 
@@ -130,6 +157,26 @@ def count_up_cross(backward_a: list, backward_b: list, count):
     tmp_b = backward_b
     while i < size_a - 1 and i < size_b - 1 and i < count:
         if up_cross(tmp_a, tmp_b):
+            ret_count = ret_count + 1
+        tmp_a = np.delete(tmp_a, 0)
+        tmp_b = np.delete(tmp_b, 0)
+        i = i + 1
+
+    return ret_count
+
+
+def count_down_cross(backward_a: list, backward_b: list, count):
+    size_a = len(backward_a)
+    size_b = len(backward_b)
+    if size_a <= 1 or size_b <= 1:
+        return 0
+
+    ret_count = 0
+    i = 0
+    tmp_a = backward_a
+    tmp_b = backward_b
+    while i < size_a - 1 and i < size_b - 1 and i < count:
+        if down_cross(tmp_a, tmp_b):
             ret_count = ret_count + 1
         tmp_a = np.delete(tmp_a, 0)
         tmp_b = np.delete(tmp_b, 0)

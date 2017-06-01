@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from base_model import TimeLog, StockBasic, ClmacdBp, ClmacdResult
+from base_model import TimeLog, StockBasic, ClmacdBp, ClmacdSp, ClmacdResult
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -127,11 +127,29 @@ class BaseDB:
             con=self.__engine)
         return data
 
+    def get_latest_sp(self, end_time: datetime):
+        delta = timedelta(days=1)
+        start_time = end_time - delta
+        data = pd.read_sql_query(
+            "SELECT * FROM clmacd_sp WHERE '" + start_time.strftime(
+                '%Y-%m-%d %H:%M:%S') + "' < id_time AND id_time<='" + end_time.strftime(
+                '%Y-%m-%d %H:%M:%S') + "' ORDER BY id_time",
+            con=self.__engine)
+        return data
+
     def merge_clmacd_bp(self, id_time, code, price):
         engine = self.__engine
         session = sessionmaker(bind=engine)()
         bp = ClmacdBp(id_time=id_time, code=code, price=price)
         session.merge(bp)
+        session.commit()
+        session.close()
+
+    def merge_clmacd_sp(self, id_time, code, price):
+        engine = self.__engine
+        session = sessionmaker(bind=engine)()
+        sp = ClmacdSp(id_time=id_time, code=code, price=price)
+        session.merge(sp)
         session.commit()
         session.close()
 

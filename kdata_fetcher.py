@@ -8,6 +8,7 @@ import tushare as ts
 from tornado import concurrent
 
 from base_db import BaseDB
+from base_math import if_times
 
 
 class KDataFetcher:
@@ -41,11 +42,16 @@ class KDataFetcher:
         try:
             table_name = 'hist_' + k_type
             df = ts.get_k_data(code=code, autype='hfq', ktype=k_type, retry_count=20, pause=3)
-            stock_date = all_dates[all_dates['code'] == code]
-            if len(stock_date) > 0:
-                max_date = stock_date['date'].max()
-                df = df[df['date'] > max_date]
-            df.to_sql(table_name, self.__db.get_engine(), if_exists='append', index=False)
+            last_index = len(df) - 1
+            if last_index > 1:
+                if if_times(df['date'][last_index], k_type):
+                    df = df.drop(last_index)
+
+                stock_date = all_dates[all_dates['code'] == code]
+                if len(stock_date) > 0:
+                    max_date = stock_date['date'].max()
+                    df = df[df['date'] > max_date]
+                df.to_sql(table_name, self.__db.get_engine(), if_exists='append', index=False)
         except Exception as e:
             print(":", e.__repr__(), code)
 

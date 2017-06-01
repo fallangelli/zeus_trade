@@ -28,3 +28,10 @@ class ClmacdBp(BaseModel):
     id_time = Column(DateTime, primary_key=True)
     code = Column(String(50), primary_key=True)
     price = Column()
+
+
+class ClmacdSp(BaseModel):
+    __tablename__ = 'clmacd_sp'
+    id_time = Column(DateTime, primary_key=True)
+    code = Column(String(50), primary_key=True)
+    price = Column()
