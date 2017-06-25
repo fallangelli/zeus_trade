@@ -1,21 +1,18 @@
-import configparser
-import datetime
 import smtplib
 from email.mime.text import MIMEText
 
-from pandas import DataFrame
+import configparser
 
 
 class ZeusMail:
     def __init__(self):
-        super().__init__()
         cf = configparser.ConfigParser()
         cf.read("conf/zeus_config.conf")
         self.__user = cf.get('mail', 'user')
         self.__pwd = cf.get('mail', 'pwd')
         self.__to = cf.get('mail', 'to')
 
-    def send_mail(self, calc_time: datetime, bp_data_frame: DataFrame, sp_data_frame: DataFrame):
+    def send_mail(self, calc_time, bp_data_frame, sp_data_frame):
         bp_count = len(bp_data_frame)
         text = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" //>'
         text += '<title>%s - bp:%d  sp:%d</title><//head>' % (calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, 0)

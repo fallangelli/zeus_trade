@@ -1,7 +1,7 @@
-import configparser
 import logging
 from datetime import datetime, timedelta
 
+import configparser
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -16,8 +16,6 @@ logging.basicConfig(
 
 class BaseDB:
     def __init__(self):
-        super().__init__()
-
         cf = configparser.ConfigParser()
         cf.read("conf/zeus_config.conf")
         username = cf.get('db_conf', 'username')
@@ -117,7 +115,7 @@ class BaseDB:
         session.commit()
         session.close()
 
-    def get_latest_bp(self, end_time: datetime):
+    def get_latest_bp(self, end_time):
         delta = timedelta(days=1)
         start_time = end_time - delta
         data = pd.read_sql_query(
@@ -127,7 +125,7 @@ class BaseDB:
             con=self.__engine)
         return data
 
-    def get_latest_sp(self, end_time: datetime):
+    def get_latest_sp(self, end_time):
         delta = timedelta(days=1)
         start_time = end_time - delta
         data = pd.read_sql_query(

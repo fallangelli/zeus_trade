@@ -1,9 +1,8 @@
-import configparser
 import multiprocessing
 import sys
 from datetime import datetime
 
-import pandas as pd
+import configparser
 from tornado import concurrent
 
 import base_math as bm
@@ -11,8 +10,7 @@ from base_db import BaseDB
 
 
 class MACDFiller:
-    def __init__(self, db: BaseDB):
-        super().__init__()
+    def __init__(self, db):
         self.__db = db
         cf = configparser.ConfigParser()
         cf.read("conf/zeus_config.conf")
@@ -35,7 +33,7 @@ class MACDFiller:
         sys.stdout.write(datetime.now().__str__() + 'filling ' + k_type + '  all macd ended\n')
         sys.stdout.flush()
 
-    def fill_macd(self, all_data: pd.DataFrame, code, k_type, curr, total):
+    def fill_macd(self, all_data, code, k_type, curr, total):
         sys.stdout.write('\r filling %s hist %s macd, %d - %d' % (code, k_type, curr, total))
         try:
             stock_data = all_data[all_data['code'] == code]

@@ -1,9 +1,8 @@
-import configparser
 import multiprocessing
 import sys
 from datetime import datetime
 
-import pandas as pd
+import configparser
 import tushare as ts
 from tornado import concurrent
 
@@ -12,8 +11,7 @@ from base_math import if_times
 
 
 class KDataFetcher:
-    def __init__(self, db: BaseDB):
-        super().__init__()
+    def __init__(self, db):
         self.__db = db
         cf = configparser.ConfigParser()
         cf.read("conf/zeus_config.conf")
@@ -37,7 +35,7 @@ class KDataFetcher:
         sys.stdout.write(datetime.now().__str__() + 'fetching ' + k_type + '  all data ended\n')
         sys.stdout.flush()
 
-    def fetch_hist_min_label_k_data(self, all_dates: pd.DataFrame, code, k_type, curr, total):
+    def fetch_hist_min_label_k_data(self, all_dates, code, k_type, curr, total):
         sys.stdout.write('\r fetching %s hist %s k_data, %d - %d' % (code, k_type, curr, total))
         try:
             table_name = 'hist_' + k_type

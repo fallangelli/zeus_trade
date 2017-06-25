@@ -7,7 +7,7 @@ VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '1
 
 
 # (当日收盘价*2+前一日EMA(12)*11)/13
-def ema(x: list, n, l=None):
+def ema(x, n, l=None):
     ema_list = []
     for i in range(0, len(x)):
         if i == 0:
@@ -22,7 +22,7 @@ def ema(x: list, n, l=None):
     return ema_list
 
 
-def dif(x: list, ema_short, ema_long):
+def dif(x, ema_short, ema_long):
     dif_list = []
     for i in range(len(x)):
         y = ema_short[i] - ema_long[i]
@@ -31,7 +31,7 @@ def dif(x: list, ema_short, ema_long):
 
 
 # 前一日DEA * 8/10 + 今日DIF * 2/10
-def dea(x: list, dif_date, n=9, dea_l=None):
+def dea(x, dif_date, n=9, dea_l=None):
     dea_list = []
     for i in range(0, len(x)):
         if i == 0:
@@ -47,7 +47,7 @@ def dea(x: list, dif_date, n=9, dea_l=None):
 
 
 # 　　（DIF-DEA）*2
-def macd(d: list, x: list, n=9, short_n=12, long_n=26, short_l=None, long_l=None, dea_l=None):
+def macd(d, x, n=9, short_n=12, long_n=26, short_l=None, long_l=None, dea_l=None):
     ema_short = ema(x, short_n, short_l)
     ema_long = ema(x, long_n, long_l)
     dif_data = dif(x, ema_short, ema_long)
@@ -62,7 +62,7 @@ def macd(d: list, x: list, n=9, short_n=12, long_n=26, short_l=None, long_l=None
     return ret_frame
 
 
-def cross(backward_a: list, backward_b: list):
+def cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:
@@ -74,7 +74,7 @@ def cross(backward_a: list, backward_b: list):
     return False
 
 
-def up_cross(backward_a: list, backward_b: list):
+def up_cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:
@@ -84,7 +84,7 @@ def up_cross(backward_a: list, backward_b: list):
     return False
 
 
-def down_cross(backward_a: list, backward_b: list):
+def down_cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:
@@ -94,7 +94,7 @@ def down_cross(backward_a: list, backward_b: list):
     return False
 
 
-def last_cross(backward_a: list, backward_b: list):
+def last_cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
     ret_val = 0
@@ -113,7 +113,7 @@ def last_cross(backward_a: list, backward_b: list):
     return ret_val
 
 
-def last_greater_0(x: list):
+def last_greater_0(x):
     size = len(x)
     ret_val = -1
     if size <= 1 or x[0] > 0:
@@ -129,7 +129,7 @@ def last_greater_0(x: list):
     return ret_val
 
 
-def last_less_0(x: list):
+def last_less_0(x):
     size = len(x)
     ret_val = -1
     if size <= 1 or x[0] < 0:
@@ -145,7 +145,7 @@ def last_less_0(x: list):
     return ret_val
 
 
-def count_up_cross(backward_a: list, backward_b: list, count):
+def count_up_cross(backward_a, backward_b, count):
     size_a = len(backward_a)
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:
@@ -165,7 +165,7 @@ def count_up_cross(backward_a: list, backward_b: list, count):
     return ret_count
 
 
-def count_down_cross(backward_a: list, backward_b: list, count):
+def count_down_cross(backward_a, backward_b, count):
     size_a = len(backward_a)
     size_b = len(backward_b)
     if size_a <= 1 or size_b <= 1:

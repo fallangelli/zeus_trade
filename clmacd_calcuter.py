@@ -1,16 +1,15 @@
-import configparser
 import multiprocessing
 import sys
 from datetime import datetime
 
-import pandas as pd
+import configparser
 from tornado import concurrent
 
 import base_math as bm
 from base_db import BaseDB
 
 
-def get_max_valid_date_between(df15: pd.DataFrame, df30: pd.DataFrame):
+def get_max_valid_date_between(df15, df30):
     s_df_30 = df30.sort_values(by=['date'], axis=0, ascending=False)
     for row in s_df_30['date'].values:
         if row in df15['date'].values:
@@ -19,8 +18,7 @@ def get_max_valid_date_between(df15: pd.DataFrame, df30: pd.DataFrame):
 
 
 class CLMACDCalculator:
-    def __init__(self, db: BaseDB):
-        super().__init__()
+    def __init__(self, db):
         self.__db = db
         cf = configparser.ConfigParser()
         cf.read("conf/zeus_config.conf")
@@ -45,7 +43,7 @@ class CLMACDCalculator:
         sys.stdout.write(datetime.now().__str__() + 'finding targets ended\n')
         sys.stdout.flush()
 
-    def fit_30_pt(self, df_15: pd.DataFrame, df_30: pd.DataFrame, code, time_count_30, curr, total):
+    def fit_30_pt(self, df_15, df_30, code, time_count_30, curr, total):
         sys.stdout.write('\r calculating %s CLMACD, %d - %d' % (code, curr, total))
         backward_count = 21 + time_count_30
         try:
@@ -98,7 +96,7 @@ class CLMACDCalculator:
     XG1:IF(N>0,COUNT(REF(CON1,1)>0,N)>0,CON1);
     '''
 
-    def fit_buy_30_pt(self, df15: pd.DataFrame, df30: pd.DataFrame, code, time_count_30):
+    def fit_buy_30_pt(self, df15, df30, code, time_count_30):
         try:
             backward_count = 21 + time_count_30
 
@@ -174,7 +172,7 @@ class CLMACDCalculator:
     XG1:IF(N>0,COUNT(REF(CON1,1)>0,N)>0,CON1);
     '''
 
-    def fit_sell_30_pt(self, df15: pd.DataFrame, df30: pd.DataFrame, code, time_count_30):
+    def fit_sell_30_pt(self, df15, df30, code, time_count_30):
         try:
             backward_count = 21 + time_count_30
             for index_30 in range(0, time_count_30):
