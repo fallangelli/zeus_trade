@@ -9,6 +9,7 @@
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/.idea" />
+            <excludedPath path="/log" />
           </excludedPaths>
         </serverdata>
       </paths>
