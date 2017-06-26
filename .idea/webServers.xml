@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="838a4bff-f302-40de-9a60-913b8015330c" name="htyc.tech" url="http://htyc.tech">
+        <fileTransfer host="htyc.tech" port="21" rootFolder="/zeus">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="21" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

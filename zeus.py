@@ -1,3 +1,4 @@
+# coding:utf-8
 import logging
 from datetime import datetime
 
@@ -42,8 +43,8 @@ class Zeus(object):
         self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='*/3')
 
         # 工作日10:31,13:31更新数据，计算趋势和B/S目标
-        self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='1,2,3,4,5', hour='10,13,16', minute='31,46')
-
+        self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='*/1,*/2,*/3,*/4,*/5', hour='*/10,*/13',
+                                 minute='31')
         try:
             self.__scheduler.start()
         except (KeyboardInterrupt, SystemExit):

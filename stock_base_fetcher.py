@@ -1,3 +1,4 @@
+# coding:utf-8
 import logging
 
 import tushare as ts
@@ -12,8 +13,7 @@ logging.basicConfig(
 
 
 class StockBaseFetcher:
-    def __init__(self, db: BaseDB):
-        super().__init__()
+    def __init__(self, db):
         self.__db = db
 
     '''
