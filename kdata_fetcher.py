@@ -24,6 +24,7 @@ class KDataFetcher:
         list_size = stock_list.count()
         futures = set()
         d_list = self.__db.get_all_date_list(k_type)
+
         i = 1
         with concurrent.futures.ThreadPoolExecutor(
                         multiprocessing.cpu_count() * self.__pool_size_cpu_times) as executor:
@@ -43,7 +44,7 @@ class KDataFetcher:
             df = ts.get_k_data(code=code, autype='hfq', ktype=k_type, retry_count=20, pause=3)
             last_index = len(df) - 1
             if last_index > 1:
-                if if_times(df['date'][last_index], k_type):
+                if not if_times(df['date'][last_index], k_type):
                     df = df.drop(last_index)
 
                 stock_date = all_dates[all_dates['code'] == code]
