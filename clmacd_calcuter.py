@@ -27,12 +27,13 @@ class CLMACDCalculator:
         self.__time_count_30 = cf.getint('calc_parameter', 'time_count_30')
 
     def find_targets(self):
-        sys.stdout.write(datetime.now().__str__() + '  finding targets starting ...\n')
+        print('loading data')
         stock_list = self.__db.get_all_stock_list()
         list_size = stock_list.count()
-        futures = set()
         df30 = self.__db.get_all_macd_data('30')
         df15 = self.__db.get_all_macd_data('15')
+        sys.stdout.write(datetime.now().__str__() + '  finding targets starting ...\n')
+        futures = set()
         i = 1
         with concurrent.futures.ThreadPoolExecutor(
                         multiprocessing.cpu_count() * self.__pool_size_cpu_times) as executor:

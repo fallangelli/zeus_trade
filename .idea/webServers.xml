@@ -3,11 +3,11 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="838a4bff-f302-40de-9a60-913b8015330c" name="htyc.tech" url="http://htyc.tech">
-        <fileTransfer host="htyc.tech" port="21" rootFolder="/zeus">
+        <fileTransfer host="htyc.tech" port="22" rootFolder="/root/zeus" accessType="SFTP">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" />
+            <advancedOptions controlEncoding="UTF-8" dataProtectionLevel="Private" />
           </advancedOptions>
-          <option name="port" value="21" />
+          <option name="port" value="22" />
         </fileTransfer>
       </webServer>
     </option>

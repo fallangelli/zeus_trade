@@ -56,7 +56,7 @@ class BaseDB:
     def get_macd_data(self, code, k_type):
         table_name = 'hist_' + k_type
         data = pd.read_sql_query(
-            "SELECT code,`date`,close,ema_short,ema_long,dif,dea,macd FROM  " + table_name + " WHERE  code='" + code + "'",
+            "SELECT code,`date`,close,macd FROM  " + table_name + " WHERE  code='" + code + "'",
             con=self.__engine)
         return data
 
@@ -150,6 +150,13 @@ class BaseDB:
         sp = ClmacdSp(id_time=id_time, code=code, price=price)
         session.merge(sp)
         session.commit()
+        session.close()
+
+    def move_out_date_data(self):
+        session = sessionmaker(bind=self.__engine)()
+        session.commit();
+        session.execute('CALL `run_move_outdate_data`()')
+        session.commit();
         session.close()
 
 

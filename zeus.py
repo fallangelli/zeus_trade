@@ -37,8 +37,6 @@ class Zeus(object):
         return False
 
     def start(self):
-        # 每月1号清理历史数据
-
         # 每周3更新列表
         self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='3')
 
@@ -60,6 +58,9 @@ class Zeus(object):
         self.__macd_filler.fill_macd_all('30')
         self.__macd_filler.fill_macd_all('15')
         self.__db.update_log_time('all_hist_with_macd_fetch_time')
+
+        logging.info('moving out date data')
+        self.__db.move_out_date_data()
 
         logging.info('finding fit 30 CLMACD targets')
         self._cl_calculator.find_targets()
