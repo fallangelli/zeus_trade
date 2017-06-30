@@ -36,7 +36,7 @@ class Zeus(object):
             return True
         return False
 
-        # def start(self):
+    def start(self):
         # 每周3更新列表
         self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='2')
 
