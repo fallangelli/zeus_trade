@@ -1,4 +1,10 @@
 # coding:utf-8
+import sys
+
+reload(sys)
+
+sys.setdefaultencoding('utf8')
+
 import smtplib
 from email.mime.text import MIMEText
 
