@@ -50,7 +50,7 @@ class BaseDB:
     def get_all_macd_data(self, k_type):
         table_name = 'hist_' + k_type
         data = pd.read_sql_table(table_name, self.get_engine(),
-                                 columns=['code', 'date', 'close', 'ema_short', 'ema_long', 'dif', 'dea', 'macd'])
+                                 columns=['code', 'date', 'close', 'dif', 'dea', 'macd'])
         return data
 
     def get_macd_data(self, code, k_type):
@@ -82,11 +82,11 @@ class BaseDB:
     def get_data_need_to_macd(self, k_type):
         table_name = 'hist_' + k_type
         ret_data = pd.read_sql_query("SELECT * FROM (\
-                                        SELECT code,date,close,ema_short,ema_long,dif,dea,macd FROM " + table_name + " \
+                                        SELECT code,date,close,dif,dea,macd FROM " + table_name + " \
                                         WHERE (date,code) IN (SELECT max(date) md,code cd FROM " + table_name + " \
                                         WHERE macd IS NOT NULL GROUP BY code)\
                                         UNION\
-                                        SELECT code,date,close,ema_short,ema_long,dif,dea,macd FROM " + table_name + " \
+                                        SELECT code,date,close,dif,dea,macd FROM " + table_name + " \
                                         WHERE macd IS NULL) c ORDER BY c.code, c.date", con=self.__engine)
         return ret_data
 
@@ -104,7 +104,7 @@ class BaseDB:
     def get_macd_data(self, code, k_type):
         table_name = 'hist_' + k_type
         data = pd.read_sql_query(
-            "SELECT code,`date`,close,ema_short,ema_long,dif,dea,macd FROM  " + table_name + " WHERE  code='" + code + "'",
+            "SELECT code,`date`,close,dif,dea,macd FROM  " + table_name + " WHERE  code='" + code + "'",
             con=self.__engine)
         return data
 
@@ -156,6 +156,14 @@ class BaseDB:
         session = sessionmaker(bind=self.__engine)()
         session.commit();
         session.execute('CALL `run_move_outdate_data`()')
+        session.commit();
+        session.close()
+
+    def clear_data(self):
+        session = sessionmaker(bind=self.__engine)()
+        session.commit();
+        session.execute('truncate hist_30')
+        session.execute('truncate hist_15')
         session.commit();
         session.close()
 

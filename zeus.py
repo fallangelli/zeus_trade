@@ -8,7 +8,6 @@ from base_db import BaseDB
 from base_mail import ZeusMail
 from clmacd_calcuter import CLMACDCalculator
 from kdata_fetcher import KDataFetcher
-from macd_filler import MACDFiller
 from stock_base_fetcher import StockBaseFetcher
 
 logging.basicConfig(
@@ -19,13 +18,12 @@ logging.basicConfig(
 
 class Zeus(object):
     def __init__(self, db, stock_base_fetcher, data_fetcher,
-                 macd_filler, cl_calculator, step_interval=5):
+                 cl_calculator, step_interval=5):
         self.__db = db
         self.__scheduler = BlockingScheduler()
         self.__step_interval = step_interval
         self.__data_fetcher = data_fetcher
         self.__stock_base_fetcher = stock_base_fetcher
-        self.__macd_filler = macd_filler
         self._cl_calculator = cl_calculator
         self.__market_close_time = datetime.now().replace(hour=15, minute=10, second=00)
 
@@ -53,15 +51,15 @@ class Zeus(object):
         self.__stock_base_fetcher.refresh_stock_list()
 
     def refresh_targets(self, end_time=None):
+        self.__db.clear_data();
+
         logging.info('fetching all hist min k_data data with macd')
         self.__data_fetcher.fetch_hist_min_label_k_data_all('30')
         self.__data_fetcher.fetch_hist_min_label_k_data_all('15')
-        self.__macd_filler.fill_macd_all('30')
-        self.__macd_filler.fill_macd_all('15')
         self.__db.update_log_time('all_hist_with_macd_fetch_time')
 
-        logging.info('moving out date data')
-        self.__db.move_out_date_data()
+        # logging.info('moving out date data')
+        # self.__db.move_out_date_data()
 
         logging.info('finding fit 30 CLMACD targets')
         self._cl_calculator.find_targets()
@@ -83,10 +81,9 @@ if __name__ == '__main__':
     bd = BaseDB()
     sbf = StockBaseFetcher(bd)
     df = KDataFetcher(bd)
-    mf = MACDFiller(bd)
     cc = CLMACDCalculator(bd)
 
-    zeus = Zeus(bd, sbf, df, mf, cc)
+    zeus = Zeus(bd, sbf, df, cc)
     # zeus.refresh_stock_list()
     # zeus.refresh_targets()
 

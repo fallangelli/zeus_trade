@@ -1,66 +1,9 @@
 # coding:utf-8
 import numpy as np
-import pandas as pd
 
 VALID_15_TIME_LABELS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30',
                         '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00']
 VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30', '15:00']
-
-
-# (当日收盘价*2+前一日EMA(12)*11)/13
-def ema(x, n, l=None):
-    ema_list = []
-    for i in range(0, len(x)):
-        if i == 0:
-            if l is None:
-                ema_list.append(x[i])
-            else:
-                y = (2 * x[i] + (n - 1) * l) / (n + 1)
-                ema_list.append(y)
-        else:
-            y = (2 * x[i] + (n - 1) * ema_list[i - 1]) / (n + 1)
-            ema_list.append(y)
-    return ema_list
-
-
-def dif(x, ema_short, ema_long):
-    dif_list = []
-    for i in range(len(x)):
-        y = ema_short[i] - ema_long[i]
-        dif_list.append(y)
-    return dif_list
-
-
-# 前一日DEA * 8/10 + 今日DIF * 2/10
-def dea(x, dif_date, n=9, dea_l=None):
-    dea_list = []
-    for i in range(0, len(x)):
-        if i == 0:
-            if dea_l is None:
-                dea_list.append(0)
-            else:
-                y = (dea_l * (n - 1) + 2 * dif_date[i]) / (n + 1)
-                dea_list.append(y)
-        else:
-            y = (dea_list[i - 1] * (n - 1) + 2 * dif_date[i]) / (n + 1)
-            dea_list.append(y)
-    return dea_list
-
-
-# 　　（DIF-DEA）*2
-def macd(d, x, n=9, short_n=12, long_n=26, short_l=None, long_l=None, dea_l=None):
-    ema_short = ema(x, short_n, short_l)
-    ema_long = ema(x, long_n, long_l)
-    dif_data = dif(x, ema_short, ema_long)
-    dea_data = dea(x, dif_data, n, dea_l)
-    macd_data = []
-    for i in range(0, len(x)):
-        val = (dif_data[i] - dea_data[i]) * 2
-        macd_data.append(val)
-
-    ret_frame = pd.DataFrame({'date': d, 'ema_short': ema_short, 'ema_long': ema_long,
-                              'dif': dif_data, 'dea': dea_data, 'macd': macd_data})
-    return ret_frame
 
 
 def cross(backward_a, backward_b):
@@ -197,8 +140,5 @@ def if_times(time, k_type):
 
 
 if __name__ == '__main__':
-    #    dif_list = DIF(df['close'])
-    #    dea_list = DEA(df['close'], dif_list)
     close = [6.38, 6.38, 6.4, 6.4, 6.38]
-    ret_list = ema(close, 26, 6.695306)
-    print(ret_list)
+    print(close)
