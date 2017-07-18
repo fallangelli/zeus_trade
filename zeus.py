@@ -11,7 +11,7 @@ from kdata_fetcher import KDataFetcher
 from stock_base_fetcher import StockBaseFetcher
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="[%(time)s] %(name)s:%(level)s: %(message)s"
 )
 

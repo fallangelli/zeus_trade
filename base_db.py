@@ -1,5 +1,4 @@
 # coding:utf-8
-import logging
 from datetime import datetime, timedelta
 
 import configparser
@@ -8,11 +7,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from base_model import TimeLog, StockBasic, ClmacdBp, ClmacdSp, ClmacdResult
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="[%(asctime)s] %(name)s:%(levelname)s: %(message)s"
-)
 
 
 class BaseDB:

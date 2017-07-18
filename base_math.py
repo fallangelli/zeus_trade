@@ -1,9 +1,12 @@
 # coding:utf-8
 import numpy as np
 
-VALID_15_TIME_LABELS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30',
-                        '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00']
-VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30', '15:00']
+VALID_15_TIME_LABELS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15',
+                        '11:30',
+                        '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45',
+                        '15:00']
+VALID_30_TIME_LABELS = ['10:00', '10:30', '11:00', '11:30', '13:30', '14:00', '14:30',
+                        '15:00']
 
 
 def cross(backward_a, backward_b):
@@ -18,10 +21,10 @@ def cross(backward_a, backward_b):
     return False
 
 
-def up_cross(backward_a, backward_b):
+def cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
-    if size_a <= 1 or size_b <= 1:
+    if size_a < 2 or size_b < 2:
         return False
     if backward_a[0] > backward_b[0] and backward_a[1] <= backward_b[1]:
         return True
@@ -41,19 +44,22 @@ def down_cross(backward_a, backward_b):
 def last_cross(backward_a, backward_b):
     size_a = len(backward_a)
     size_b = len(backward_b)
-    ret_val = 0
+    ret_val = -1
+
+    if size_a < 6 or size_b < 6:
+        return ret_val
+
     i = 0
-    if size_a > 1 or size_b > 1:
-        if backward_a[0] > backward_b[0]:
-            while i < size_a and i < size_b and backward_a[i] >= backward_b[i]:
+    while i + 1 < size_a and i + 1 < size_b:
+        if backward_a[i] > backward_b[i] and backward_a[i + 1] <= backward_b[i + 1]:
+            if i < 5:
                 i = i + 1
-            ret_val = i
-        if backward_a[0] < backward_b[0]:
-            while i < size_a and i < size_b and backward_a[i] <= backward_b[i]:
-                i = i + 1
-            ret_val = i
-        if backward_a[0] == backward_b[0]:
-            ret_val = i
+                continue
+            else:
+                ret_val = i
+                break
+        i = i + 1
+
     return ret_val
 
 
@@ -100,7 +106,7 @@ def count_up_cross(backward_a, backward_b, count):
     tmp_a = backward_a
     tmp_b = backward_b
     while i < size_a - 1 and i < size_b - 1 and i < count:
-        if up_cross(tmp_a, tmp_b):
+        if cross(tmp_a, tmp_b):
             ret_count = ret_count + 1
         tmp_a = np.delete(tmp_a, 0)
         tmp_b = np.delete(tmp_b, 0)
@@ -140,5 +146,7 @@ def if_times(time, k_type):
 
 
 if __name__ == '__main__':
-    close = [6.38, 6.38, 6.4, 6.4, 6.38]
-    print(close)
+    baka = [1, 2, 3, 4, 5, 4, 3, 2, 1]
+    bakb = [5, 4, 3, 2, 1, 2, 3, 4, 5]
+    bakc = [-5, -4, 3, 2, 1, -1, -3, -4, 5]
+    print last_greater_0(bakc)

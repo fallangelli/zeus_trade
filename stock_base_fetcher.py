@@ -6,11 +6,6 @@ from sqlalchemy.types import String
 
 from base_db import BaseDB
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="[%(time)s] %(name)s:%(level)s: %(message)s"
-)
-
 
 class StockBaseFetcher:
     def __init__(self, db):

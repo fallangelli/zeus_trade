@@ -1,4 +1,5 @@
 # coding:utf-8
+import logging
 import multiprocessing
 import sys
 from datetime import datetime
@@ -38,7 +39,8 @@ class CLMACDCalculator:
         with concurrent.futures.ThreadPoolExecutor(
                         multiprocessing.cpu_count() * self.__pool_size_cpu_times) as executor:
             for stock in stock_list:
-                future = executor.submit(self.fit_30_pt, df15, df30, stock.code, self.__time_count_30, i, list_size)
+                future = executor.submit(self.fit_30_pt, df15, df30, stock.code,
+                                         self.__time_count_30, i, list_size)
                 futures.add(future)
                 i = i + 1
 
@@ -59,7 +61,7 @@ class CLMACDCalculator:
 
             max_date = get_max_valid_date_between(df15, df30)
             if max_date.strip() == '':
-                print("code %s cann't get between date" % code)
+                logging.debug("code %s cann't get between date" % code)
                 return False
 
             df15 = df15[df15['date'] <= max_date]
@@ -69,7 +71,7 @@ class CLMACDCalculator:
             df30 = df30[0:backward_count + 1]
             df15 = df15[0:(backward_count + 1) * 2]
 
-            self.fit_buy_30_pt(df15, df30, code, time_count_30)
+            # self.fit_buy_30_pt(df15, df30, code, time_count_30)
             self.fit_sell_30_pt(df15, df30, code, time_count_30)
         except Exception as e:
             print(":", e.__repr__(), code)
@@ -105,48 +107,62 @@ class CLMACDCalculator:
             for index_30 in range(0, time_count_30):
                 ret_j = 0
                 # 半小时敞口向上 0 轴上
-                up_30 = (df30['macd'].values[index_30] > df30['macd'].values[index_30 + 1] and
-                         (df30['dif'].values[index_30] - df30['dea'].values[index_30]) > abs(
-                             0.1 * df30['dea'].values[index_30])) and df30['macd'].values[index_30] > 0
+                up_30 = (df30['macd'].values[index_30] > df30['macd'].values[
+                    index_30 + 1] and
+                         (df30['dif'].values[index_30] - df30['dea'].values[
+                             index_30]) > abs(
+                             0.1 * df30['dea'].values[index_30])) and df30['macd'].values[
+                                                                          index_30] > 0
                 if not up_30:
                     continue
 
                 up_15 = False
                 for j in range(0, 2):
                     ret_j = 2 * index_30 + j
-                    # 15分底背离
-                    last_cross_index = bm.last_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                     df15['dea'][ret_j:(ret_j + 21)].values)
-                    if last_cross_index >= backward_count:
+                    up_cross = bm.cross(df15['dif'][ret_j:].values,
+                                        df15['dea'][ret_j:].values)
+                    if not up_cross:
                         continue
-                    depart_tmp = df15['close'].values[last_cross_index] > df15['close'].values[ret_j] and \
-                                 df15['dif'].values[ret_j] > df15['dif'].values[last_cross_index] and \
-                                 bm.up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                             df15['dea'][ret_j:(ret_j + 21)].values)
+
+                    # 15分底背离
+                    last_cross_index = bm.last_cross(
+                        df15['dif'][ret_j + 1:].values,
+                        df15['dea'][ret_j + 1:].values)
+                    if last_cross_index >= backward_count or last_cross_index < 3:
+                        continue
+                    depart_tmp = df15['close'].values[ret_j + last_cross_index + 1] > \
+                                 df15['close'].values[ret_j] and \
+                                 df15['dif'].values[ret_j] > df15['dif'].values[
+                                     ret_j + last_cross_index + 1]
+
                     if not depart_tmp:
                         continue
 
                     # 二次金叉
-                    if df15['dea'].values[ret_j] > 0:
+                    if df15['dea'].values[ret_j] >= 0:
                         continue
 
                     back_dea = df15['dea'][ret_j:(ret_j + 21)].values
-                    last_index = bm.last_greater_0(back_dea)
-                    if last_index <= 0:
+                    greater_0_index = bm.last_greater_0(back_dea)
+                    if greater_0_index <= 0:
                         continue
 
-                    cross_count = bm.count_up_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                    df15['dea'][ret_j:(ret_j + 21)].values, last_index)
+                    cross_count = bm.count_up_cross(
+                        df15['dif'][ret_j:(ret_j + 21)].values,
+                        df15['dea'][ret_j:(ret_j + 21)].values, greater_0_index)
                     if cross_count >= 2:
                         up_15 = True
                         break
 
-                if up_30 and up_15:
+                if up_15:
                     print("buy pt %s - 30M: %s , 15M: %s" % (
-                        code, df30['date'].values[index_30], df15['date'].values[ret_j]))
+                        code, df30['date'].values[index_30],
+                        df15['date'].values[ret_j]))
 
-                    self.__db.merge_clmacd_bp(id_time=df15['date'].values[ret_j], code=code,
-                                              price=float(df15['close'].values[ret_j]))
+                    self.__db.merge_clmacd_bp(id_time=df15['date'].values[ret_j],
+                                              code=code,
+                                              price=float(
+                                                  df15['close'].values[ret_j]))
         except Exception as e:
             print(":", e.__repr__(), code)
 
@@ -180,38 +196,49 @@ class CLMACDCalculator:
             for index_30 in range(0, time_count_30):
                 ret_j = 0
                 # 半小时敞口向下 0 轴下
-                down_30 = (df30['macd'].values[index_30] < df30['macd'].values[index_30 + 1] and
-                           (df30['dea'].values[index_30] - df30['dif'].values[index_30]) > abs(
-                               0.1 * df30['dea'].values[index_30])) and df30['macd'].values[index_30] < 0
+                down_30 = (df30['macd'].values[index_30] < df30['macd'].values[
+                    index_30 + 1] and
+                           (df30['dea'].values[index_30] - df30['dif'].values[
+                               index_30]) > abs(
+                               0.1 * df30['dea'].values[index_30])) and \
+                          df30['macd'].values[
+                              index_30] < 0
                 if not down_30:
                     continue
 
                 down_15 = False
                 for j in range(0, 2):
                     ret_j = 2 * index_30 + j
-                    # 15分顶背离
-                    last_cross_index = bm.last_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                     df15['dea'][ret_j:(ret_j + 21)].values)
-                    if last_cross_index >= backward_count:
+                    down_cross = bm.cross(df15['dea'][ret_j:].values,
+                                          df15['dif'][ret_j:].values)
+                    if not down_cross:
                         continue
-                    depart_tmp = df15['close'].values[ret_j] > df15['close'].values[last_cross_index] and \
-                                 df15['dif'].values[last_cross_index] > df15['dif'].values[ret_j] and \
-                                 bm.down_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                               df15['dea'][ret_j:(ret_j + 21)].values)
+
+                    if df15['dea'].values[ret_j] <= 0:
+                        continue
+                    # 15分顶背离
+                    last_cross_index = bm.last_cross(
+                        df15['dea'][ret_j + 1:].values,
+                        df15['dif'][ret_j + 1:].values)
+                    if last_cross_index >= backward_count or last_cross_index < 3:
+                        continue
+                    depart_tmp = df15['close'].values[ret_j + last_cross_index + 1] < \
+                                 df15['close'].values[ret_j] and \
+                                 df15['dif'].values[ret_j] < df15['dif'].values[
+                                     ret_j + last_cross_index + 1]
+
                     if not depart_tmp:
                         continue
 
                     # 二次死叉
-                    if df15['dea'].values[ret_j] < 0:
-                        continue
-
                     back_dea = df15['dea'][ret_j:(ret_j + 21)].values
-                    last_index = bm.last_less_0(back_dea)
-                    if last_index <= 0:
+                    less_0_index = bm.last_less_0(back_dea)
+                    if less_0_index <= 0:
                         continue
 
-                    cross_count = bm.count_down_cross(df15['dif'][ret_j:(ret_j + 21)].values,
-                                                      df15['dea'][ret_j:(ret_j + 21)].values, last_index)
+                    cross_count = bm.count_up_cross(
+                        df15['dea'][ret_j:(ret_j + 21)].values,
+                        df15['dif'][ret_j:(ret_j + 21)].values, less_0_index)
                     if cross_count >= 2:
                         down_15 = True
                         break
@@ -220,7 +247,8 @@ class CLMACDCalculator:
                     print("sell pt %s - 30M:  %s , 15M: %s" % (
                         code, df30['date'].values[index_30], df15['date'].values[ret_j]))
 
-                    self.__db.merge_clmacd_sp(id_time=df15['date'].values[ret_j], code=code,
+                    self.__db.merge_clmacd_sp(id_time=df15['date'].values[ret_j],
+                                              code=code,
                                               price=float(df15['close'].values[ret_j]))
 
         except Exception as e:
@@ -232,6 +260,6 @@ if __name__ == '__main__':
     cc = CLMACDCalculator(bd)
     cc.find_targets()
 
-    # d30 = bd.get_macd_data('300652', '30')
-    # d15 = bd.get_macd_data('300652', '15')
-    # cc.fit_30_pt(d15, d30, '300652', 8, 1, 1)
+    # d30 = bd.get_macd_data('300555', '30')
+    # d15 = bd.get_macd_data('300555', '15')
+    # cc.fit_30_pt(d15, d30, '300555', 8, 1, 1)
