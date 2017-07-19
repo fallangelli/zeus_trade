@@ -71,7 +71,7 @@ class CLMACDCalculator:
             df30 = df30[0:backward_count + 1]
             df15 = df15[0:(backward_count + 1) * 2]
 
-            # self.fit_buy_30_pt(df15, df30, code, time_count_30)
+            self.fit_buy_30_pt(df15, df30, code, time_count_30)
             self.fit_sell_30_pt(df15, df30, code, time_count_30)
         except Exception as e:
             print(":", e.__repr__(), code)

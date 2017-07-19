@@ -12,7 +12,6 @@ from stock_base_fetcher import StockBaseFetcher
 
 logging.basicConfig(
     level=logging.INFO,
-    format="[%(time)s] %(name)s:%(level)s: %(message)s"
 )
 
 
@@ -30,7 +29,8 @@ class Zeus(object):
     # 交易系统退出的条件, 如果判读符合条件,则退出交易系统
     def ready_to_exit(self):
         if datetime.now() > self.__market_close_time:
-            logging.warning('现在不是交易时间, 自动退出交易, 如果需要改变退出条件,请修改 AutoTrade.py的ready_to_exit函数')
+            logging.warning(
+                '现在不是交易时间, 自动退出交易, 如果需要改变退出条件,请修改 AutoTrade.py的ready_to_exit函数')
             return True
         return False
 
@@ -39,7 +39,8 @@ class Zeus(object):
         self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='2')
 
         # 工作日10:31,13:31更新数据，计算趋势和B/S目标
-        self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='0-4', hour='23',
+        self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='0-4',
+                                 hour='23',
                                  minute='59')
         try:
             self.__scheduler.start()
@@ -57,9 +58,6 @@ class Zeus(object):
         self.__data_fetcher.fetch_hist_min_label_k_data_all('30')
         self.__data_fetcher.fetch_hist_min_label_k_data_all('15')
         self.__db.update_log_time('all_hist_with_macd_fetch_time')
-
-        # logging.info('moving out date data')
-        # self.__db.move_out_date_data()
 
         logging.info('finding fit 30 CLMACD targets')
         self._cl_calculator.find_targets()

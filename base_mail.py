@@ -21,15 +21,18 @@ class ZeusMail:
 
     def send_mail(self, calc_time, bp_data_frame, sp_data_frame):
         bp_count = len(bp_data_frame)
+        sp_count = len(sp_data_frame)
         text = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" //>'
-        text += '<title>%s - bp:%d  sp:%d</title><//head>' % (calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, 0)
-        text += '<p align = "center"> %s - bp:%d  sp:%d </p>' % (calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, 0)
+        text += '<title>%s - bp:%d  sp:%d</title><//head>' % (
+        calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, sp_count)
+        text += '<p align = "center"> %s - bp:%d  sp:%d </p>' % (
+        calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, sp_count)
         text += '<body><table border="1" align="center">'
         for index, row in bp_data_frame.iterrows():
             text += '<tr align="center" style="background:darkred"><td>买点</td>'
             text += '<td>%s</td><td>%s</td><td>%.3f</td></tr>' % (row['id_time'], row['code'], row['price'])
         for index, row in sp_data_frame.iterrows():
-            text += '<tr align="center" style="background:darkred"><td>买点</td>'
+            text += '<tr align="center" style="background:darkgreen"><td>卖点</td>'
             text += '<td>%s</td><td>%s</td><td>%.3f</td></tr>' % (row['id_time'], row['code'], row['price'])
         text += '</table></body></html>'
 
