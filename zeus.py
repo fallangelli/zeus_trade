@@ -36,7 +36,9 @@ class Zeus(object):
 
     def start(self):
         # 每周3更新列表
-        self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='2')
+        self.__scheduler.add_job(self.refresh_stock_list, 'cron', day_of_week='2',
+                                 hour='3',
+                                 minute='59')
 
         # 工作日10:31,13:31更新数据，计算趋势和B/S目标
         self.__scheduler.add_job(self.refresh_targets, 'cron', day_of_week='0-4',
