@@ -156,8 +156,8 @@ class BaseDB:
     def clear_data(self):
         session = sessionmaker(bind=self.__engine)()
         session.commit();
-        session.execute('truncate hist_30')
-        session.execute('truncate hist_15')
+        session.execute('truncate hist_30;')
+        session.execute('truncate hist_15;')
         session.commit();
         session.close()
 
