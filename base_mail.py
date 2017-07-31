@@ -43,7 +43,7 @@ class ZeusMail:
 
         msg = MIMEText(text, 'html', 'utf-8')
         msg["Subject"] = '%s - bp:%d  sp:%d' % (
-            calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, 0)
+            calc_time.strftime('%Y-%m-%d %H:%M:%S'), bp_count, sp_count)
         msg["From"] = self.__user
         msg["To"] = self.__to
 
